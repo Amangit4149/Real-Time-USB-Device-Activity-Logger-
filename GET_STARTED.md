@@ -162,7 +162,6 @@ Real Time USB Activity Logger - INITIALIZATION
 - Technology explanations
 - How everything works
 - Database schema
-- Future improvements
 
 ### For Installation:
 🔧 **SETUP.md** - Step-by-step setup

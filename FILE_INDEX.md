@@ -182,7 +182,6 @@
 - Technology explanations
 - Setup instructions
 - Database schema
-- Future improvements
 - References
 
 **Audience:** General overview, instructors, reviewers

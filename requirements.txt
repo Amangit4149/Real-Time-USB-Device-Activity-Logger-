@@ -1,0 +1,17 @@
+# USB Activity Logger - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Windows Management Instrumentation for USB detection
+pywin32>=305
+WMI>=1.5.1
+
+# PHASE 2: File system monitoring
+watchdog>=3.0.0
+
+# Note: The following are included with standard Python installation:
+# - tkinter (GUI)
+# - sqlite3 (Database)
+# - csv (Export)
+# - threading (Concurrency)
+# - re (Regex parsing)
+# - datetime (Timestamps)

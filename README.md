@@ -181,38 +181,6 @@ USB\VID_0781&PID_5567\4C530001234567890123
 
 ---
 
-## 🎓 Academic Demonstration Points
-
-### For Viva/Presentation:
-
-1. **Why WMI?**
-   - Windows API for system management
-   - Real-time hardware event detection
-   - No admin privileges required for reading
-
-2. **Why SQLite?**
-   - Serverless (no separate database process)
-   - ACID compliant (reliable)
-   - Perfect for desktop applications
-
-3. **Why Threading?**
-   - GUI runs in main thread (Tkinter requirement)
-   - Monitoring runs in background thread
-   - Prevents GUI freezing during continuous monitoring
-
-4. **Security Considerations:**
-   - Parameterized SQL queries prevent injection
-   - Input sanitization in utils.py
-   - Optional whitelist for authorized devices
-
-5. **Modular Design Benefits:**
-   - Easy to test individual components
-   - Easy to extend functionality
-   - Clear separation of concerns
-   - Maintainable codebase
-
----
-
 ## 📊 Database Schema
 
 ```sql

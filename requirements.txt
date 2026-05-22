@@ -1,4 +1,4 @@
-# USB Activity Logger - Python Dependencies
+# Real Time USB Activity Logger - Python Dependencies
 # Install with: pip install -r requirements.txt
 
 # Windows Management Instrumentation for USB detection

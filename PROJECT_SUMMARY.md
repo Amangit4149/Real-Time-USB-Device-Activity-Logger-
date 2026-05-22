@@ -1,6 +1,6 @@
 # 📊 PROJECT COMPLETION SUMMARY
 
-## USB Device Activity Logger with GUI Dashboard
+## Real Time USB Activity Logger with GUI Dashboard
 
 **Date:** February 10, 2026  
 **Status:** ✅ COMPLETE (60-70% as per requirements)  
@@ -48,7 +48,7 @@
 
 ### Phase 5: GUI Dashboard ✅
 - [x] Tkinter implementation
-- [x] Title: "USB Activity Logger"
+- [x] Title: "Real Time USB Activity Logger"
 - [x] Treeview table widget
 - [x] All required columns (7)
 - [x] Refresh Logs button

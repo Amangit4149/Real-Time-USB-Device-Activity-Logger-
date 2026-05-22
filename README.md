@@ -1,8 +1,8 @@
-# 🔌 USB Device Activity Logger with GUI Dashboard
+# 🔌 Real Time USB Activity Logger with GUI Dashboard
 
 ## 📋 Project Overview
 
-A Windows-based USB Device Activity Logger that monitors, logs, and displays USB device insertion and removal events in real-time. Built with Python, this application demonstrates system-level monitoring, database management, GUI development, and multi-threaded programming.
+A Windows-based Real Time USB Activity Logger that monitors, logs, and displays USB device insertion and removal events in real-time. Built with Python, this application demonstrates system-level monitoring, database management, GUI development, and multi-threaded programming.
 
 **Academic Project Status:** 60-70% Complete (Fully Functional Core Features)
 
@@ -47,7 +47,7 @@ A Windows-based USB Device Activity Logger that monitors, logs, and displays USB
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     USB ACTIVITY LOGGER                      │
+│                     Real Time USB Activity Logger                      │
 └─────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
@@ -361,7 +361,7 @@ This is an academic project for educational purposes.
 ## 👤 Author
 
 **Academic Project**  
-USB Device Activity Logger  
+Real Time USB Activity Logger  
 Windows Desktop Application  
 
 ---

@@ -29,7 +29,7 @@ import threading
 
 class USBLoggerGUI:
     """
-    Main GUI class for USB Device Activity Logger.
+    Main GUI class for Real Time USB Activity Logger.
     
     Features:
     - Real-time USB log display
@@ -50,7 +50,7 @@ class USBLoggerGUI:
             root: Tkinter root window
         """
         self.root = root
-        self.root.title("USB Device Activity Logger")
+        self.root.title("Real Time USB Activity Logger")
         self.root.geometry("1400x900")
         self.root.resizable(True, True)
         
@@ -75,7 +75,7 @@ class USBLoggerGUI:
         
         title_label = tk.Label(
             title_frame,
-            text="🔌 USB Device Activity Logger",
+            text="🔌 Real Time USB Activity Logger",
             font=('Arial', 18, 'bold'),
             bg='#2c3e50',
             fg='white'

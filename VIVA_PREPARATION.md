@@ -1,8 +1,8 @@
-# 🎓 VIVA PREPARATION GUIDE - USB Activity Logger with File Monitoring
+# 🎓 VIVA PREPARATION GUIDE - Real Time USB Activity Logger with File Monitoring
 
 ## 📋 PROJECT OVERVIEW
 
-**Project Name:** USB Device Activity Logger with File System Monitoring (DLP Prototype)  
+**Project Name:** Real Time USB Activity Logger with File System Monitoring (DLP Prototype)  
 **Version:** Phase 2 (87% Complete)  
 **Platform:** Windows  
 **Language:** Python  
@@ -669,7 +669,7 @@ This ensures no orphaned threads or file handles remain after exit."
 ## 🎤 PRESENTATION TIPS
 
 ### **Opening Statement (30 seconds):**
-> "I've developed a Windows-based USB Device Activity Logger with File System Monitoring - a Data Loss Prevention prototype. It uses WMI for hardware detection, Watchdog for file monitoring, SQLite for data persistence, and Tkinter for the GUI. The system tracks USB connections, monitors file operations, detects large file transfers, and provides comprehensive audit logging with user accountability."
+> "I've developed a Windows-based Real Time USB Activity Logger with File System Monitoring - a Data Loss Prevention prototype. It uses WMI for hardware detection, Watchdog for file monitoring, SQLite for data persistence, and Tkinter for the GUI. The system tracks USB connections, monitors file operations, detects large file transfers, and provides comprehensive audit logging with user accountability."
 
 ### **Demo Flow (5 minutes):**
 1. **Launch** → Show initialization messages

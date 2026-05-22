@@ -1,7 +1,7 @@
 """
 TEST SUITE
 ----------
-Comprehensive testing script for USB Activity Logger.
+Comprehensive testing script for Real Time USB Activity Logger.
 Run this to verify all components are working correctly.
 """
 
@@ -243,7 +243,7 @@ def test_monitor():
 def run_all_tests():
     """Run all tests and report results."""
     print("\n" + "="*60)
-    print(" USB ACTIVITY LOGGER - COMPREHENSIVE TEST SUITE")
+    print(" Real Time USB Activity Logger - COMPREHENSIVE TEST SUITE")
     print("="*60)
     
     tests = [

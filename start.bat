@@ -1,9 +1,9 @@
 @echo off
-REM USB Activity Logger - Quick Start Script
+REM Real Time USB Activity Logger - Quick Start Script
 REM This batch file automates the setup and launch process
 
 echo ========================================
-echo USB ACTIVITY LOGGER - QUICK START
+echo Real Time USB Activity Logger - QUICK START
 echo ========================================
 echo.
 
@@ -36,7 +36,7 @@ if errorlevel 1 (
 
 echo.
 echo ========================================
-echo LAUNCHING USB ACTIVITY LOGGER...
+echo LAUNCHING Real Time USB Activity Logger...
 echo ========================================
 echo.
 

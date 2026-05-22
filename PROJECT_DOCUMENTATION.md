@@ -1,9 +1,9 @@
-# USB Activity Logger with File System Monitoring
+# Real Time USB Activity Logger with File System Monitoring
 ## Professional Project Documentation
 
 ---
 
-**Project Title:** USB Device Activity Logger with File System Monitoring (DLP Prototype)  
+**Project Title:** Real Time USB Activity Logger with File System Monitoring (DLP Prototype)  
 **Version:** 2.0 (Phase 2)  
 **Platform:** Windows  
 **Language:** Python 3.x  
@@ -187,7 +187,7 @@ Tracks file operations on USB drives.
 ### 5.1 Dashboard Layout
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  USB Activity Logger - Phase 2                          │
+│  Real Time USB Activity Logger - Phase 2                          │
 ├─────────────────────────────────────────────────────────┤
 │  Analytics Dashboard                                    │
 │  ┌──────────────┬──────────────┬──────────────┐        │
@@ -429,7 +429,7 @@ The `demo_phase2.py` script simulates:
 
 ## 14. Conclusion
 
-This USB Activity Logger represents a **production-ready Data Loss Prevention prototype** that successfully addresses real-world security challenges. The project demonstrates:
+This Real Time USB Activity Logger represents a **production-ready Data Loss Prevention prototype** that successfully addresses real-world security challenges. The project demonstrates:
 
 1. **Technical Proficiency:** Integration of multiple technologies (WMI, Watchdog, SQLite, Tkinter)
 2. **Security Awareness:** Implementation of DLP concepts and audit logging

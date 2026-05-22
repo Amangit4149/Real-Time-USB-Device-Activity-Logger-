@@ -1,6 +1,6 @@
 # 🧪 PHASE 2 TESTING GUIDE
 
-## USB Activity Logger - Phase 2 DLP Prototype Testing
+## Real Time USB Activity Logger - Phase 2 DLP Prototype Testing
 
 **Version:** 2.0  
 **Date:** February 10, 2026  

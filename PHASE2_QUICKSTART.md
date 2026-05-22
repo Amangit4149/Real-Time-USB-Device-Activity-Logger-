@@ -1,6 +1,6 @@
 # 🎉 PHASE 2 COMPLETE - QUICK START GUIDE
 
-## USB Activity Logger + File Monitor (DLP Prototype)
+## Real Time USB Activity Logger + File Monitor (DLP Prototype)
 
 **Version:** 2.0  
 **Date:** February 10, 2026  
@@ -175,7 +175,7 @@ usb_logger/
 ### **5-Minute Demo Script:**
 
 1. **Introduction** (30 sec)
-   - "This is a USB Activity Logger with Data Loss Prevention capabilities"
+   - "This is a Real Time USB Activity Logger with Data Loss Prevention capabilities"
    
 2. **Show Empty State** (15 sec)
    - Launch GUI, show empty tables

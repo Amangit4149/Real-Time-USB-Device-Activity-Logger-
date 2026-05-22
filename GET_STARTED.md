@@ -1,8 +1,8 @@
-# 🎉 USB ACTIVITY LOGGER - PROJECT COMPLETE!
+# 🎉 Real Time USB Activity Logger - PROJECT COMPLETE!
 
 ## ✅ ALL SYSTEMS READY
 
-**Congratulations!** Your USB Device Activity Logger is fully built and tested.
+**Congratulations!** Your Real Time USB Activity Logger is fully built and tested.
 
 ---
 
@@ -109,7 +109,7 @@ python main.py
 **You'll see:**
 ```
 ==================================================
-USB ACTIVITY LOGGER - INITIALIZATION
+Real Time USB Activity Logger - INITIALIZATION
 ==================================================
 
 [1/2] Initializing database...
@@ -126,7 +126,7 @@ USB ACTIVITY LOGGER - INITIALIZATION
 ```
 
 ### 2. The GUI Opens
-- Title: "🔌 USB Activity Logger"
+- Title: "🔌 Real Time USB Activity Logger"
 - Buttons: Refresh, Export, Clear, Exit
 - Table with columns: ID, Event Type, Device Name, VID, PID, Serial, Timestamp
 - Status bar at bottom
@@ -295,7 +295,7 @@ USB ACTIVITY LOGGER - INITIALIZATION
 
 ## 🎉 YOU'RE READY!
 
-Your USB Activity Logger is:
+Your Real Time USB Activity Logger is:
 - ✅ **Fully functional**
 - ✅ **Well documented**
 - ✅ **Tested and verified**
@@ -363,7 +363,7 @@ This project demonstrates:
 
 ## 🌟 FINAL WORDS
 
-> "This USB Activity Logger successfully demonstrates multiple computer science concepts in a single, cohesive application. The modular architecture, comprehensive documentation, and robust error handling showcase professional software engineering practices. With 100% test pass rate and complete documentation, this project is ready for academic demonstration."
+> "This Real Time USB Activity Logger successfully demonstrates multiple computer science concepts in a single, cohesive application. The modular architecture, comprehensive documentation, and robust error handling showcase professional software engineering practices. With 100% test pass rate and complete documentation, this project is ready for academic demonstration."
 
 **Good luck with your presentation! 🎉**
 

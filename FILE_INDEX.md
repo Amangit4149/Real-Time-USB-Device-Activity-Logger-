@@ -1,4 +1,4 @@
-# 📋 USB ACTIVITY LOGGER - FILE INDEX
+# 📋 Real Time USB Activity Logger - FILE INDEX
 
 ## Complete Project File Listing
 

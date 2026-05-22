@@ -1,6 +1,6 @@
 # 🎉 **PHASE 2 COMPLETE!** 🎉
 
-## USB Activity Logger + File Monitor (DLP Prototype)
+## Real Time USB Activity Logger + File Monitor (DLP Prototype)
 
 **Version:** 2.0 | **Status:** ✅ Production Ready | **Completion:** 87%
 

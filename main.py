@@ -1,7 +1,7 @@
 """
 MAIN APPLICATION
 ----------------
-Entry point for the USB Activity Logger application.
+Entry point for the Real Time USB Activity Logger application.
 
 This module:
 1. Initializes the database
@@ -32,7 +32,7 @@ def initialize_application():
         bool: True if initialization successful, False otherwise
     """
     print("=" * 50)
-    print("USB ACTIVITY LOGGER - INITIALIZATION")
+    print("Real Time USB Activity Logger - INITIALIZATION")
     print("=" * 50)
     
     # Step 1: Initialize database

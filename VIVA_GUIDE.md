@@ -1,4 +1,4 @@
-# 🎓 USB Activity Logger - Viva/Presentation Guide
+# 🎓 Real Time USB Activity Logger - Viva/Presentation Guide
 
 ## 📋 Quick Reference for Academic Demonstration
 
@@ -7,7 +7,7 @@
 ## 🎯 Project Introduction (2 minutes)
 
 **Opening Statement:**
-> "I have developed a Windows-based USB Device Activity Logger that monitors, logs, and displays USB device insertion and removal events in real-time. The system uses Python with WMI for hardware monitoring, SQLite for data persistence, and Tkinter for the GUI dashboard."
+> "I have developed a Windows-based Real Time USB Activity Logger that monitors, logs, and displays USB device insertion and removal events in real-time. The system uses Python with WMI for hardware monitoring, SQLite for data persistence, and Tkinter for the GUI dashboard."
 
 **Key Points:**
 - Real-time USB event detection

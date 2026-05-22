@@ -7,6 +7,9 @@ __pycache__/
 # SQLite database
 usb_logs.db
 
+# Export artifact
+test_export.csv
+
 # VS Code
 .vscode/
 

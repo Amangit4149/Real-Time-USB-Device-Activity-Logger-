@@ -21,13 +21,14 @@ A Windows-based Real Time USB Activity Logger that monitors, logs, and displays 
 - Complete event history
 
 ✅ **GUI Dashboard**
-- Professional Tkinter interface
+- Professional Tkinter + modern PyQt6 interface
 - Color-coded event display
 - Auto-refresh capability
 - Scrollable table view
+- Security dashboard for active sessions and unauthorized USB alerts
 
 ✅ **Data Export**
-- Export logs to CSV format
+- Export logs to CSV or JSON format
 - Timestamped filenames
 - Excel/Sheets compatible
 
@@ -39,6 +40,8 @@ A Windows-based Real Time USB Activity Logger that monitors, logs, and displays 
 ✅ **Optional Security Feature**
 - Device whitelist support
 - Unauthorized device alerts
+- Email notification support for high-risk events
+- Screenshot capture on unauthorized USB insertion
 - Configurable via JSON
 
 ---
@@ -74,7 +77,7 @@ DATA FLOW:
 2. Parse device details → utils.py
 3. Store in database → database.py
 4. Display in GUI → gui.py
-5. Export to CSV → export.py
+5. Export to CSV/JSON → export.py
 ```
 
 ---
@@ -88,9 +91,12 @@ usb_logger/
 ├── monitor.py           # USB monitoring engine (WMI)
 ├── database.py          # SQLite database operations
 ├── gui.py               # Tkinter GUI dashboard
-├── export.py            # CSV export functionality
+├── gui_qt.py            # Modern PyQt6 dashboard
+├── export.py            # CSV/JSON export functionality
 ├── utils.py             # Helper functions (parsing, validation)
+├── config.py            # Application configuration loader
 ├── whitelist.json       # Security whitelist configuration
+├── app_config.json      # User settings and alert configuration
 ├── usb_logs.db          # SQLite database (auto-created)
 └── README.md            # This file
 ```
@@ -108,6 +114,8 @@ usb_logger/
 | **Threading** | Concurrency | Prevents GUI freezing during monitoring |
 | **CSV** | Export format | Universal data format, Excel compatible |
 
+| **PyQt6 / pyqtgraph (optional)** | Modern GUI + Charts | Provides a more polished UI and fast plotting for analytics |
+
 ---
 
 ## 📦 Dependencies
@@ -119,6 +127,16 @@ pip install pywin32 wmi
 ```
 
 **Note:** Tkinter and SQLite are included with standard Python installation.
+
+If you want the modern PyQt6 UI and charts, install the full requirements:
+
+```powershell
+pip install -r requirements.txt
+```
+
+The `requirements.txt` includes `PyQt6` and `pyqtgraph` for the new GUI (`gui_qt.py`). If those are not installed the application will fall back to the original Tkinter UI.
+
+The new GUI also includes a theme selector and dark mode toggle. The selected theme is saved automatically and restored on the next launch.
 
 ---
 

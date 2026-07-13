@@ -21,14 +21,22 @@ echo.
 
 REM Check if dependencies are installed
 echo Checking dependencies...
-python -c "import wmi" >nul 2>&1
-if errorlevel 1 (
-    echo [!] Dependencies not found. Installing...
+echo Checking dependencies (wmi, PyQt6, pyqtgraph, Pillow)...
+SET MISSING=0
+python -c "import wmi" >nul 2>&1 || SET MISSING=1
+python -c "import PyQt6" >nul 2>&1 || SET MISSING=1
+python -c "import pyqtgraph" >nul 2>&1 || SET MISSING=1
+python -c "from PIL import ImageGrab" >nul 2>&1 || SET MISSING=1
+
+if %MISSING%==1 (
+    echo [!] Some dependencies are missing. Installing from requirements.txt...
     pip install -r requirements.txt
     if errorlevel 1 (
         echo [ERROR] Failed to install dependencies!
         pause
         exit /b 1
+    ) else (
+        echo [OK] Dependencies installed
     )
 ) else (
     echo [OK] Dependencies already installed

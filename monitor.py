@@ -39,7 +39,8 @@ import pythoncom  # Required for WMI in threads
 from database import insert_log, update_session_end
 from utils import (parse_device_id, get_timestamp, is_valid_usb_device, 
                    sanitize_string, get_username, get_all_removable_drives,
-                   calculate_duration)
+                   calculate_duration, capture_screenshot, send_email_notification)
+from config import ensure_config_files, get_app_config, get_email_config, is_device_whitelisted
 
 # Import file monitoring (Phase 2)
 try:
@@ -57,8 +58,9 @@ monitor_thread = None
 # Format: {device_id: {'connect_time': str, 'drive_letter': str, 'username': str, 'device_info': dict}}
 active_sessions = {}
 
-# Alert callback for file monitoring
+# Alert callback for file monitoring and unauthorized USB detection
 file_alert_callback = None
+usb_alert_callback = None
 
 
 def set_file_alert_callback(callback):
@@ -72,6 +74,18 @@ def set_file_alert_callback(callback):
     """
     global file_alert_callback
     file_alert_callback = callback
+
+
+def set_usb_alert_callback(callback):
+    """
+    Set the callback function for unauthorized USB alerts.
+    """
+    global usb_alert_callback
+    usb_alert_callback = callback
+
+
+# Ensure config files are available at import time
+ensure_config_files()
 
 
 def get_connected_usb_devices():
@@ -116,7 +130,7 @@ def get_connected_usb_devices():
                 continue
                 
     except Exception as e:
-        print(f"[✗] Error getting USB devices: {e}")
+        print(f"[ERROR] Error getting USB devices: {e}")
     
     return devices
 
@@ -143,7 +157,7 @@ def monitor_usb_events():
     """
     global monitoring_active, active_sessions
     
-    print("[✓] USB monitoring started (Phase 2 - with session tracking)")
+    print("[OK] USB monitoring started (Phase 2 - with session tracking)")
     
     # CRITICAL FIX: Initialize COM for this thread
     # WMI requires COM initialization when running in a separate thread
@@ -181,7 +195,7 @@ def monitor_usb_events():
                         if new_drives:
                             # Use the new drive letter
                             drive_letter = list(new_drives)[0]
-                            print(f"[✓] Detected NEW drive letter: {drive_letter}")
+                            print(f"[OK] Detected NEW drive letter: {drive_letter}")
                         else:
                             # Fallback: If no new drive detected, but we have drives
                             # Check if the device matches any available drive (not perfect)
@@ -194,7 +208,7 @@ def monitor_usb_events():
                             new_retry = retry_drives - previous_drive_letters
                             if new_retry:
                                 drive_letter = list(new_retry)[0]
-                                print(f"[✓] Detected drive letter after retry: {drive_letter}")
+                                print(f"[OK] Detected drive letter after retry: {drive_letter}")
                                 current_drive_letters = retry_drives # Update current
                         
                         # Log to database with session tracking
@@ -209,7 +223,49 @@ def monitor_usb_events():
                             connect_time=timestamp,
                             username=username
                         )
-                        
+
+                        # Check whitelist and security policy
+                        app_config = get_app_config()
+                        authorized = is_device_whitelisted(device_info)
+                        if not authorized and app_config.get('alert_on_unknown_device', True):
+                            # Log an unauthorized event for visibility
+                            insert_log(
+                                event_type='UNAUTHORIZED',
+                                device_name=device_info['name'],
+                                device_id=device_id,
+                                vendor_id=device_info['vid'],
+                                product_id=device_info['pid'],
+                                serial_number=device_info['serial'],
+                                timestamp=timestamp,
+                                connect_time=timestamp,
+                                username=username
+                            )
+                            print(f"[!] Unauthorized USB device detected: {device_info['name']}")
+
+                            # Capture screenshot if configured
+                            if app_config.get('capture_screenshots_on_unauthorized_insert', False):
+                                screenshot_path = capture_screenshot(app_config.get('screenshot_dir'))
+                                if screenshot_path:
+                                    print(f"[OK] Unauthorized event screenshot: {screenshot_path}")
+
+                            # Send email alert if configured
+                            email_config = get_email_config()
+                            if email_config.get('enabled'):
+                                subject = f"USB Security Alert - Unauthorized Device Detected"
+                                body = (
+                                    f"An unauthorized USB device was detected.\n\n"
+                                    f"Device Name: {device_info['name']}\n"
+                                    f"Vendor ID: {device_info['vid']}\n"
+                                    f"Product ID: {device_info['pid']}\n"
+                                    f"Serial Number: {device_info['serial']}\n"
+                                    f"User: {username}\n"
+                                    f"Time: {timestamp}\n"
+                                )
+                                send_email_notification(subject, body, email_config.get('recipients', []), email_config)
+
+                            if usb_alert_callback:
+                                usb_alert_callback(device_info=device_info, username=username, timestamp=timestamp)
+
                         # Track active session
                         active_sessions[device_id] = {
                             'connect_time': timestamp,
@@ -244,7 +300,7 @@ def monitor_usb_events():
                             connect_time = session['connect_time']
                             usage_duration = calculate_duration(connect_time, timestamp)
                             
-                            print(f"[✓] Session duration: {usage_duration}s")
+                            print(f"[OK] Session duration: {usage_duration}s")
                             
                             # Stop file monitoring
                             if FILE_MONITORING_AVAILABLE:
@@ -280,13 +336,13 @@ def monitor_usb_events():
                 time.sleep(2)
                 
             except Exception as e:
-                print(f"[✗] Monitoring error: {e}")
+                print(f"[ERROR] Monitoring error: {e}")
                 time.sleep(2)  # Wait before retrying
     
     finally:
         # Clean up COM resources
         pythoncom.CoUninitialize()
-        print("[✓] USB monitoring stopped")
+        print("[OK] USB monitoring stopped")
 
 
 def start_monitoring():
@@ -309,7 +365,7 @@ def start_monitoring():
         return True
         
     except Exception as e:
-        print(f"[✗] Failed to start monitoring: {e}")
+        print(f"[ERROR] Failed to start monitoring: {e}")
         monitoring_active = False
         return False
 
@@ -333,7 +389,7 @@ def stop_monitoring():
         from file_monitor import stop_all_monitors
         stop_all_monitors()
     
-    print("[✓] Stopping USB monitoring...")
+    print("[OK] Stopping USB monitoring...")
 
 
 def is_monitoring_active():

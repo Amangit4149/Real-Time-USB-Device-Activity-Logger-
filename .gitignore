@@ -4,11 +4,14 @@ __pycache__/
 *.pyo
 *.pyd
 
-# SQLite database
+# SQLite database (auto-generated at runtime)
 usb_logs.db
 
-# Export artifact
-test_export.csv
+# Export artifacts (auto-generated)
+*.csv
+*.json
+!app_config.json
+!whitelist.json
 
 # VS Code
 .vscode/
@@ -22,3 +25,9 @@ test_export.csv
 # OS files
 Thumbs.db
 .DS_Store
+
+# Screenshots (auto-generated)
+screenshots/
+
+# Scratch/test files
+scratch/

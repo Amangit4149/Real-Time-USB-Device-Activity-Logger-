@@ -18,10 +18,13 @@ Tkinter is used because:
 - Easy to learn and demonstrate
 """
 
+import os
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from database import (fetch_all_logs, clear_all_logs, fetch_file_logs, clear_file_logs,
-                      count_large_transfers, count_total_file_events, count_sessions_today)
+                      count_large_transfers, count_total_file_events, count_sessions_today,
+                      count_unauthorized_events)
+from config import get_app_config, save_app_config, WHITELIST_PATH
 from export import export_to_csv
 from utils import format_file_size, format_duration, get_timestamp
 import threading
@@ -60,6 +63,9 @@ class USBLoggerGUI:
         
         # Setup GUI components
         self.setup_ui()
+        
+        # Populate admin input fields once on init (before auto-refresh starts)
+        self.populate_admin_input_fields()
         
         # Start auto-refresh
         self.schedule_refresh()
@@ -126,6 +132,194 @@ class USBLoggerGUI:
             bd=2
         )
         self.large_transfers_label.pack(side=tk.LEFT, padx=10, pady=15)
+        
+        # ===== ADMIN DASHBOARD PANEL =====
+        self.admin_frame = tk.Frame(self.root, bg='#f8f9fa', height=110)
+        self.admin_frame.pack(fill=tk.X, side=tk.TOP, padx=10, pady=5)
+        self.admin_frame.pack_propagate(False)
+
+        admin_title = tk.Label(
+            admin_frame,
+            text="Admin Dashboard",
+            font=('Arial', 12, 'bold'),
+            bg='#f8f9fa',
+            fg='#2c3e50'
+        )
+        admin_title.pack(anchor='w', padx=10, pady=(8, 4))
+
+        self.email_alert_status_label = tk.Label(
+            admin_frame,
+            text="Email Alerts: Disabled",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.email_alert_status_label.pack(anchor='w', padx=20)
+
+        self.email_sender_label = tk.Label(
+            admin_frame,
+            text="Sender: N/A",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.email_sender_label.pack(anchor='w', padx=20)
+
+        self.email_recipients_label = tk.Label(
+            admin_frame,
+            text="Recipients: N/A",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.email_recipients_label.pack(anchor='w', padx=20)
+
+        self.email_enabled_var = tk.BooleanVar(value=False)
+        self.email_enabled_check = tk.Checkbutton(
+            admin_frame,
+            text="Enable email alerts",
+            variable=self.email_enabled_var,
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e',
+            activebackground='#f8f9fa',
+            selectcolor='#f8f9fa'
+        )
+        self.email_enabled_check.pack(anchor='w', padx=20, pady=(4, 2))
+
+        smtp_host_label = tk.Label(
+            admin_frame,
+            text="SMTP Host:",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        smtp_host_label.pack(anchor='w', padx=20, pady=(2, 0))
+        self.smtp_host_entry = tk.Entry(admin_frame, width=40)
+        self.smtp_host_entry.insert(0, '')
+        self.smtp_host_entry.pack(anchor='w', padx=20, pady=(0, 2))
+
+        smtp_port_label = tk.Label(
+            admin_frame,
+            text="SMTP Port:",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        smtp_port_label.pack(anchor='w', padx=20, pady=(2, 0))
+        self.smtp_port_entry = tk.Entry(admin_frame, width=12)
+        self.smtp_port_entry.insert(0, '587')
+        self.smtp_port_entry.pack(anchor='w', padx=20, pady=(0, 8))
+
+        smtp_username_label = tk.Label(
+            admin_frame,
+            text="SMTP Username:",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        smtp_username_label.pack(anchor='w', padx=20, pady=(2, 0))
+        self.smtp_username_entry = tk.Entry(admin_frame, width=40)
+        self.smtp_username_entry.insert(0, '')
+        self.smtp_username_entry.pack(anchor='w', padx=20, pady=(0, 2))
+
+        smtp_password_label = tk.Label(
+            admin_frame,
+            text="SMTP Password:",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        smtp_password_label.pack(anchor='w', padx=20, pady=(2, 0))
+        self.smtp_password_entry = tk.Entry(admin_frame, width=40, show='*')
+        self.smtp_password_entry.insert(0, '')
+        self.smtp_password_entry.pack(anchor='w', padx=20, pady=(0, 8))
+
+        self.admin_sender_entry = tk.Entry(admin_frame, width=50)
+        self.admin_sender_entry.insert(0, '')
+        self.admin_sender_entry.pack(anchor='w', padx=20, pady=(4, 2))
+
+        self.admin_recipients_entry = tk.Entry(admin_frame, width=50)
+        self.admin_recipients_entry.insert(0, '')
+        self.admin_recipients_entry.pack(anchor='w', padx=20, pady=(2, 8))
+
+        self.admin_total_usb_label = tk.Label(
+            admin_frame,
+            text="Total USB events: 0",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.admin_total_usb_label.pack(anchor='w', padx=20)
+
+        self.admin_total_file_label = tk.Label(
+            admin_frame,
+            text="Total file events: 0",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.admin_total_file_label.pack(anchor='w', padx=20)
+
+        self.admin_whitelist_label = tk.Label(
+            admin_frame,
+            text="Whitelist enforcement: Unknown",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.admin_whitelist_label.pack(anchor='w', padx=20)
+
+        self.admin_unauthorized_label = tk.Label(
+            admin_frame,
+            text="Unauthorized events: 0",
+            font=('Arial', 10),
+            bg='#f8f9fa',
+            fg='#34495e'
+        )
+        self.admin_unauthorized_label.pack(anchor='w', padx=20)
+
+        self.admin_buttons_frame = tk.Frame(admin_frame, bg='#f8f9fa')
+        self.admin_buttons_frame.pack(fill=tk.X, padx=10, pady=8)
+
+        self.open_whitelist_admin_btn = tk.Button(
+            self.admin_buttons_frame,
+            text="Open Whitelist File",
+            command=self.open_whitelist_file,
+            bg='#3498db',
+            fg='white',
+            font=('Arial', 9, 'bold'),
+            width=18,
+            relief=tk.RAISED,
+            bd=2
+        )
+        self.open_whitelist_admin_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.refresh_admin_btn = tk.Button(
+            self.admin_buttons_frame,
+            text="Refresh Admin Panel",
+            command=self.refresh_admin_dashboard,
+            bg='#2ecc71',
+            fg='white',
+            font=('Arial', 9, 'bold'),
+            width=18,
+            relief=tk.RAISED,
+            bd=2
+        )
+        self.refresh_admin_btn.pack(side=tk.LEFT, padx=(0, 5))
+
+        self.save_admin_email_btn = tk.Button(
+            self.admin_buttons_frame,
+            text="Save Email Settings",
+            command=self.save_admin_email_settings,
+            bg='#3498db',
+            fg='white',
+            font=('Arial', 9, 'bold'),
+            width=18,
+            relief=tk.RAISED,
+            bd=2
+        )
+        self.save_admin_email_btn.pack(side=tk.LEFT, padx=(0, 5))
         
         # ===== BUTTON PANEL =====
         button_frame = tk.Frame(self.root, bg='#ecf0f1', height=60)
@@ -207,6 +401,17 @@ class USBLoggerGUI:
             bg='#ecf0f1'
         )
         self.auto_refresh_check.pack(side=tk.LEFT, padx=15)
+
+        self.admin_mode_var = tk.BooleanVar(value=True)
+        self.admin_mode_check = tk.Checkbutton(
+            button_frame,
+            text="Admin Mode",
+            variable=self.admin_mode_var,
+            command=self.toggle_admin_mode,
+            font=('Arial', 9),
+            bg='#ecf0f1'
+        )
+        self.admin_mode_check.pack(side=tk.LEFT, padx=15)
         
         # Exit button
         self.exit_btn = tk.Button(
@@ -431,7 +636,50 @@ class USBLoggerGUI:
         self.sessions_label.config(text=f"Sessions Today: {sessions}")
         self.file_events_label.config(text=f"Total File Events: {file_events}")
         self.large_transfers_label.config(text=f"⚠️ Large Transfers: {large_transfers}")
-    
+        self.refresh_admin_dashboard()
+
+    def refresh_admin_dashboard(self):
+        """Refresh read-only display labels only (not input fields)."""
+        config = get_app_config()
+        email_config = config.get('email_alerts', {})
+        enabled = email_config.get('enabled', False)
+        sender = email_config.get('sender', 'N/A') or 'N/A'
+        recipients = ', '.join(email_config.get('recipients', [])) or 'None'
+        whitelist_enabled = config.get('whitelist_enabled', True)
+        unauthorized_count = count_unauthorized_events()
+
+        self.email_alert_status_label.config(text=f"Email Alerts: {'Enabled' if enabled else 'Disabled'}")
+        self.email_sender_label.config(text=f"Sender: {sender}")
+        self.email_recipients_label.config(text=f"Recipients: {recipients}")
+        self.admin_whitelist_label.config(text=f"Whitelist enforcement: {'Enabled' if whitelist_enabled else 'Disabled'}")
+        total_usb = len(fetch_all_logs())
+        total_file = count_total_file_events()
+        self.admin_total_usb_label.config(text=f"Total USB events: {total_usb}")
+        self.admin_total_file_label.config(text=f"Total file events: {total_file}")
+        self.admin_unauthorized_label.config(text=f"Unauthorized events: {unauthorized_count}")
+
+    def populate_admin_input_fields(self):
+        """Populate input fields from config (called on load and after save only)."""
+        config = get_app_config()
+        email_config = config.get('email_alerts', {})
+        enabled = email_config.get('enabled', False)
+        sender = email_config.get('sender', '') or ''
+        recipients = ', '.join(email_config.get('recipients', []))
+        
+        self.email_enabled_var.set(enabled)
+        self.smtp_host_entry.delete(0, tk.END)
+        self.smtp_host_entry.insert(0, email_config.get('smtp_host', ''))
+        self.smtp_port_entry.delete(0, tk.END)
+        self.smtp_port_entry.insert(0, str(email_config.get('smtp_port', 587)))
+        self.smtp_username_entry.delete(0, tk.END)
+        self.smtp_username_entry.insert(0, email_config.get('username', ''))
+        self.smtp_password_entry.delete(0, tk.END)
+        self.smtp_password_entry.insert(0, email_config.get('password', ''))
+        self.admin_sender_entry.delete(0, tk.END)
+        self.admin_sender_entry.insert(0, sender)
+        self.admin_recipients_entry.delete(0, tk.END)
+        self.admin_recipients_entry.insert(0, recipients)
+
     def refresh_all(self):
         """
         Refresh all displays (USB logs, file logs, analytics).
@@ -439,6 +687,7 @@ class USBLoggerGUI:
         usb_count = self.refresh_usb_logs()
         file_count = self.refresh_file_logs()
         self.refresh_analytics()
+        self.refresh_admin_dashboard()
         
         # Update status bar
         self.status_bar.config(text=f"Ready | USB Logs: {usb_count} | File Events: {file_count}")
@@ -461,6 +710,35 @@ class USBLoggerGUI:
             self.status_bar.config(text="Auto-refresh enabled")
         else:
             self.status_bar.config(text="Auto-refresh disabled")
+
+    def toggle_admin_mode(self):
+        # Keep the admin panel always visible and just refresh its contents.
+        self.admin_frame.pack(fill=tk.X, side=tk.TOP, padx=10, pady=5)
+        self.refresh_admin_dashboard()
+    
+    def save_admin_email_settings(self):
+        config = get_app_config()
+        email_config = config.get('email_alerts', {})
+        email_config['enabled'] = self.email_enabled_var.get()
+        email_config['smtp_host'] = self.smtp_host_entry.get().strip()
+        try:
+            email_config['smtp_port'] = int(self.smtp_port_entry.get().strip() or 587)
+        except ValueError:
+            email_config['smtp_port'] = 587
+        email_config['username'] = self.smtp_username_entry.get().strip()
+        email_config['password'] = self.smtp_password_entry.get()
+        email_config['sender'] = self.admin_sender_entry.get().strip()
+        recipients = [recipient.strip() for recipient in self.admin_recipients_entry.get().split(',') if recipient.strip()]
+        email_config['recipients'] = recipients
+        config['email_alerts'] = email_config
+
+        if save_app_config(config):
+            messagebox.showinfo('Saved', 'Email settings saved successfully.')
+        else:
+            messagebox.showerror('Save Failed', 'Unable to save email settings.')
+
+        self.refresh_admin_dashboard()
+        self.populate_admin_input_fields()
     
     def export_logs(self):
         """
@@ -506,6 +784,18 @@ class USBLoggerGUI:
                 messagebox.showinfo("Success", "All file logs have been cleared.")
             else:
                 messagebox.showerror("Error", "Failed to clear file logs.")
+
+    def open_whitelist_file(self):
+        """
+        Open or create the whitelist file for editing.
+        """
+        try:
+            if not os.path.exists(WHITELIST_PATH):
+                with open(WHITELIST_PATH, 'w', encoding='utf-8') as f:
+                    f.write('{"whitelist_enabled": true, "whitelisted_devices": []}')
+            os.startfile(WHITELIST_PATH)
+        except Exception as e:
+            messagebox.showerror("Open Failed", f"Unable to open whitelist file:\n{e}")
     
     def show_large_transfer_alert(self, file_path, file_size_mb, username, event_type, risk_flag='LARGE_TRANSFER'):
         """

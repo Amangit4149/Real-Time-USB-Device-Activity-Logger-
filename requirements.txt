@@ -15,3 +15,9 @@ watchdog>=3.0.0
 # - threading (Concurrency)
 # - re (Regex parsing)
 # - datetime (Timestamps)
+
+# Optional modern UI and plotting (PyQt6 + fast Qt plotting)
+PyQt6>=6.5
+pyqtgraph>=0.13
+# Optional screenshot capture
+Pillow>=9.0.0

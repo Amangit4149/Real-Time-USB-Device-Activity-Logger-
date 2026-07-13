@@ -19,9 +19,14 @@ import sys
 import os
 from database import init_db
 from monitor import start_monitoring, stop_monitoring
-from gui import launch_gui
-import tkinter as tk
-from tkinter import messagebox
+
+# Prefer PyQt6 GUI if available, otherwise fall back to Tkinter GUI
+try:
+    from gui_qt import launch_gui
+except Exception:
+    from gui import launch_gui
+    import tkinter as tk
+    from tkinter import messagebox
 
 
 def initialize_application():
@@ -38,17 +43,17 @@ def initialize_application():
     # Step 1: Initialize database
     print("\n[1/2] Initializing database...")
     if not init_db():
-        print("[✗] Database initialization failed!")
+        print("[ERROR] Database initialization failed!")
         return False
     
     # Step 2: Start USB monitoring
     print("\n[2/2] Starting USB monitoring...")
     if not start_monitoring():
-        print("[✗] Failed to start USB monitoring!")
+        print("[ERROR] Failed to start USB monitoring!")
         return False
     
     print("\n" + "=" * 50)
-    print("✓ INITIALIZATION COMPLETE")
+    print("INITIALIZATION COMPLETE")
     print("=" * 50 + "\n")
     
     return True
@@ -67,33 +72,33 @@ def main():
     try:
         # Initialize application components
         if not initialize_application():
-            print("\n[✗] Application initialization failed!")
+            print("\n[ERROR] Application initialization failed!")
             input("Press Enter to exit...")
             sys.exit(1)
         
         # Launch GUI (blocking call - runs until window closed)
-        print("[✓] Launching GUI...")
+        print("[OK] Launching GUI...")
         launch_gui()
         
     except KeyboardInterrupt:
         print("\n\n[!] Keyboard interrupt detected")
     
     except Exception as e:
-        print(f"\n[✗] Fatal error: {e}")
+        print(f"\n[ERROR] Fatal error: {e}")
         import traceback
         traceback.print_exc()
     
     finally:
         # Cleanup: Stop monitoring
-        print("\n[✓] Shutting down...")
+        print("\n[OK] Shutting down...")
         stop_monitoring()
-        print("[✓] Application closed successfully")
+        print("[OK] Application closed successfully")
 
 
 if __name__ == "__main__":
     # Check if running on Windows
     if sys.platform != 'win32':
-        print("[✗] This application only works on Windows!")
+        print("[ERROR] This application only works on Windows!")
         print("    WMI (Windows Management Instrumentation) is required.")
         input("Press Enter to exit...")
         sys.exit(1)

@@ -71,7 +71,7 @@ class USBFileMonitor(FileSystemEventHandler):
         self.username = username
         self.alert_callback = alert_callback
         
-        print(f"[✓] File monitor initialized for {drive_letter} ({username})")
+        print(f"[OK] File monitor initialized for {drive_letter} ({username})")
     
     def _get_file_size(self, file_path):
         """
@@ -154,7 +154,7 @@ class USBFileMonitor(FileSystemEventHandler):
                 )
         
         except Exception as e:
-            print(f"[✗] Error logging file event: {e}")
+            print(f"[ERROR] Error logging file event: {e}")
     
     def on_created(self, event):
         """
@@ -252,7 +252,7 @@ def start_file_monitoring(device_id, drive_letter, username, alert_callback=None
         
         # Verify drive exists
         if not os.path.exists(drive_letter):
-            print(f"[✗] Drive {drive_letter} not found")
+            print(f"[ERROR] Drive {drive_letter} not found")
             return False
         
         # Create event handler
@@ -266,7 +266,7 @@ def start_file_monitoring(device_id, drive_letter, username, alert_callback=None
         # Store observer
         active_observers[device_id] = observer
         
-        print(f"[✓] File monitoring started for {drive_letter}")
+        print(f"[OK] File monitoring started for {drive_letter}")
         
         # SCAN EXISTING FILES
         # Run in a separate thread to avoid blocking
@@ -281,7 +281,7 @@ def start_file_monitoring(device_id, drive_letter, username, alert_callback=None
         return True
         
     except Exception as e:
-        print(f"[✗] Failed to start file monitoring: {e}")
+        print(f"[ERROR] Failed to start file monitoring: {e}")
         return False
 
 
@@ -332,7 +332,7 @@ def scan_existing_files(drive_path, device_id, username, alert_callback):
                         print(f"[!] Error scanning file {filename}: {e}")
                         
     except Exception as e:
-        print(f"[✗] Scan failed: {e}")
+        print(f"[ERROR] Scan failed: {e}")
 
 
 def stop_file_monitoring(device_id):
@@ -362,11 +362,11 @@ def stop_file_monitoring(device_id):
         # Remove from active list
         del active_observers[device_id]
         
-        print(f"[✓] File monitoring stopped for {device_id}")
+        print(f"[OK] File monitoring stopped for {device_id}")
         return True
         
     except Exception as e:
-        print(f"[✗] Failed to stop file monitoring: {e}")
+        print(f"[ERROR] Failed to stop file monitoring: {e}")
         return False
 
 
@@ -383,7 +383,7 @@ def stop_all_monitors():
     for device_id in device_ids:
         stop_file_monitoring(device_id)
     
-    print("[✓] All file monitors stopped")
+    print("[OK] All file monitors stopped")
 
 
 def is_monitoring(device_id):

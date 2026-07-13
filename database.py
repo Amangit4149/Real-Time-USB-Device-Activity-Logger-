@@ -87,11 +87,11 @@ def init_db():
         
         conn.commit()
         conn.close()
-        print("[✓] Database initialized successfully (Phase 2 schema)")
+        print("[OK] Database initialized successfully (Phase 2 schema)")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] Database initialization error: {e}")
+        print(f"[ERROR] Database initialization error: {e}")
         return False
 
 
@@ -135,11 +135,11 @@ def insert_log(event_type, device_name, device_id, vendor_id, product_id, serial
         
         conn.commit()
         conn.close()
-        print(f"[✓] Log inserted: {event_type} - {device_name}")
+        print(f"[OK] Log inserted: {event_type} - {device_name}")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] Insert error: {e}")
+        print(f"[ERROR] Insert error: {e}")
         return False
 
 
@@ -164,7 +164,7 @@ def fetch_all_logs():
         return logs
         
     except sqlite3.Error as e:
-        print(f"[✗] Fetch error: {e}")
+        print(f"[ERROR] Fetch error: {e}")
         return []
 
 
@@ -184,11 +184,11 @@ def clear_all_logs():
         
         conn.commit()
         conn.close()
-        print("[✓] All logs cleared")
+        print("[OK] All logs cleared")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] Clear error: {e}")
+        print(f"[ERROR] Clear error: {e}")
         return False
 
 
@@ -210,7 +210,7 @@ def get_log_count():
         return count
         
     except sqlite3.Error as e:
-        print(f"[✗] Count error: {e}")
+        print(f"[ERROR] Count error: {e}")
         return 0
 
 
@@ -251,12 +251,12 @@ def insert_file_log(device_id, file_path, event_type, file_size, username, times
         conn.close()
         
         # Log with risk indicator
-        risk_indicator = "⚠️" if risk_flag == 'LARGE_TRANSFER' else "✓"
-        print(f"[{risk_indicator}] File log: {event_type} - {os.path.basename(file_path)}")
+        risk_indicator = "[WARN]" if risk_flag == 'LARGE_TRANSFER' else "[OK]"
+        print(f"{risk_indicator} File log: {event_type} - {os.path.basename(file_path)}")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] File log insert error: {e}")
+        print(f"[ERROR] File log insert error: {e}")
         return False
 
 
@@ -287,7 +287,7 @@ def fetch_file_logs(limit=None):
         return logs
         
     except sqlite3.Error as e:
-        print(f"[✗] File fetch error: {e}")
+        print(f"[ERROR] File fetch error: {e}")
         return []
 
 
@@ -306,11 +306,11 @@ def clear_file_logs():
         
         conn.commit()
         conn.close()
-        print("[✓] All file logs cleared")
+        print("[OK] All file logs cleared")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] Clear file logs error: {e}")
+        print(f"[ERROR] Clear file logs error: {e}")
         return False
 
 
@@ -336,8 +336,49 @@ def count_large_transfers():
         return count
         
     except sqlite3.Error as e:
-        print(f"[✗] Count large transfers error: {e}")
+        print(f"[ERROR] Count large transfers error: {e}")
         return 0
+
+
+def count_unauthorized_events():
+    """
+    Count USB events that were marked as unauthorized.
+    
+    Returns:
+        int: Number of unauthorized USB events
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM usb_logs WHERE event_type = 'UNAUTHORIZED'")
+        count = cursor.fetchone()[0]
+        conn.close()
+        return count
+    except sqlite3.Error as e:
+        print(f"[ERROR] Count unauthorized events error: {e}")
+        return 0
+
+
+def fetch_unauthorized_logs(limit=20):
+    """
+    Retrieve recent unauthorized USB events from the database.
+    
+    Args:
+        limit (int): Maximum number of records to retrieve
+    
+    Returns:
+        list: List of unauthorized log tuples
+    """
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM usb_logs WHERE event_type = ? ORDER BY id DESC LIMIT ?', ('UNAUTHORIZED', limit))
+        logs = cursor.fetchall()
+        conn.close()
+        return logs
+    except sqlite3.Error as e:
+        print(f"[ERROR] Fetch unauthorized logs error: {e}")
+        return []
 
 
 def count_total_file_events():
@@ -358,7 +399,7 @@ def count_total_file_events():
         return count
         
     except sqlite3.Error as e:
-        print(f"[✗] Count file events error: {e}")
+        print(f"[ERROR] Count file events error: {e}")
         return 0
 
 
@@ -388,7 +429,7 @@ def count_sessions_today():
         return count
         
     except sqlite3.Error as e:
-        print(f"[✗] Count sessions error: {e}")
+        print(f"[ERROR] Count sessions error: {e}")
         return 0
 
 
@@ -424,10 +465,10 @@ def update_session_end(device_id, disconnect_time, usage_duration):
         conn.commit()
         conn.close()
         
-        print(f"[✓] Session updated: {usage_duration}s duration")
+        print(f"[OK] Session updated: {usage_duration}s duration")
         return True
         
     except sqlite3.Error as e:
-        print(f"[✗] Update session error: {e}")
+        print(f"[ERROR] Update session error: {e}")
         return False
 

@@ -4,6 +4,7 @@ UTILITY MODULE
 Helper functions for parsing USB device information and formatting data.
 """
 
+import os
 import re
 from datetime import datetime
 
@@ -13,8 +14,8 @@ def parse_device_id(device_id):
     Parse a Windows USB Device ID string to extract VID, PID, and Serial Number.
     
     Windows Device ID Format Example:
-    USB\VID_0781&PID_5567\4C530001234567890123
-    
+    USB\\VID_0781&PID_5567\\4C530001234567890123
+
     Where:
     - VID = Vendor ID (identifies manufacturer)
     - PID = Product ID (identifies specific product)
@@ -326,3 +327,90 @@ def format_duration(seconds):
         parts.append(f'{secs}s')
     
     return ' '.join(parts)
+
+
+def capture_screenshot(save_dir=None, prefix='screenshot'):
+    """Capture the current screen and save it as a PNG file."""
+    try:
+        from PIL import ImageGrab
+    except ImportError:
+        print('[!] Pillow is required for screenshot capture. Install Pillow to enable this feature.')
+        return None
+
+    try:
+        if not save_dir:
+            save_dir = os.path.join(os.path.dirname(__file__), 'screenshots')
+        elif not os.path.isabs(save_dir):
+            save_dir = os.path.join(os.path.dirname(__file__), save_dir)
+        os.makedirs(save_dir, exist_ok=True)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"{prefix}_{timestamp}.png"
+        filepath = os.path.join(save_dir, filename)
+
+        screenshot = ImageGrab.grab()
+        screenshot.save(filepath)
+        print(f'[OK] Screenshot saved: {filepath}')
+        return filepath
+    except Exception as e:
+        print(f'[ERROR] Screenshot capture failed: {e}')
+        return None
+
+
+def send_email_notification(subject, body, recipients, smtp_config, error_out=None):
+    """Send a notification email using SMTP settings."""
+    try:
+        if not recipients:
+            err_msg = 'No recipients configured for email alerts.'
+            print(f'[!] {err_msg}')
+            if isinstance(error_out, list):
+                error_out.append(err_msg)
+            return False
+
+        import smtplib
+        from email.message import EmailMessage
+        import ssl
+
+        message = EmailMessage()
+        message['Subject'] = subject
+        message['From'] = smtp_config.get('sender', 'usb-logger@example.com')
+        message['To'] = ', '.join(recipients)
+        message.set_content(body)
+
+        host = smtp_config.get('smtp_host')
+        port = smtp_config.get('smtp_port', 587)
+        use_tls = smtp_config.get('use_tls', True)
+        username = smtp_config.get('username')
+        password = smtp_config.get('password')
+
+        if not host or not username or not password:
+            err_msg = 'Incomplete SMTP configuration (Host, Username, or Password missing).'
+            print(f'[!] {err_msg}')
+            if isinstance(error_out, list):
+                error_out.append(err_msg)
+            return False
+
+        if port == 465:
+            context = ssl.create_default_context()
+            with smtplib.SMTP_SSL(host, port, timeout=10, context=context) as server:
+                server.login(username, password)
+                server.send_message(message)
+        elif use_tls:
+            context = ssl.create_default_context()
+            with smtplib.SMTP(host, port, timeout=10) as server:
+                server.starttls(context=context)
+                server.login(username, password)
+                server.send_message(message)
+        else:
+            with smtplib.SMTP(host, port, timeout=10) as server:
+                server.login(username, password)
+                server.send_message(message)
+
+        print('[OK] Email alert sent successfully')
+        return True
+
+    except Exception as e:
+        print(f'[ERROR] Email alert failed: {e}')
+        if isinstance(error_out, list):
+            error_out.append(str(e))
+        return False

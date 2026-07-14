@@ -357,8 +357,8 @@ def capture_screenshot(save_dir=None, prefix='screenshot'):
         return None
 
 
-def send_email_notification(subject, body, recipients, smtp_config, error_out=None):
-    """Send a notification email using SMTP settings."""
+def send_email_notification(subject, body, recipients, smtp_config, error_out=None, attachment_path=None):
+    """Send a notification email using SMTP settings, optionally with an attachment."""
     try:
         if not recipients:
             err_msg = 'No recipients configured for email alerts.'
@@ -370,12 +370,30 @@ def send_email_notification(subject, body, recipients, smtp_config, error_out=No
         import smtplib
         from email.message import EmailMessage
         import ssl
+        import mimetypes
 
         message = EmailMessage()
         message['Subject'] = subject
         message['From'] = smtp_config.get('sender', 'usb-logger@example.com')
         message['To'] = ', '.join(recipients)
         message.set_content(body)
+
+        if attachment_path and os.path.exists(attachment_path):
+            try:
+                ctype, encoding = mimetypes.guess_type(attachment_path)
+                if ctype is None or encoding is not None:
+                    ctype = 'application/octet-stream'
+                maintype, subtype = ctype.split('/', 1)
+                with open(attachment_path, 'rb') as fp:
+                    message.add_attachment(
+                        fp.read(),
+                        maintype=maintype,
+                        subtype=subtype,
+                        filename=os.path.basename(attachment_path)
+                    )
+                print(f'[OK] Attached file to email: {attachment_path}')
+            except Exception as attachment_err:
+                print(f'[WARNING] Failed to attach file {attachment_path}: {attachment_err}')
 
         host = smtp_config.get('smtp_host')
         port = smtp_config.get('smtp_port', 587)

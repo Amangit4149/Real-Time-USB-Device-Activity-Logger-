@@ -39,12 +39,17 @@ from database import (fetch_all_logs, fetch_file_logs, clear_all_logs,
 from config import get_app_config, save_app_config, WHITELIST_PATH
 from export import export_to_csv, export_to_json
 from monitor import get_active_sessions
-from utils import format_file_size, format_duration, get_timestamp, send_email_notification
+from utils import format_file_size, format_duration, get_timestamp, send_email_notification, capture_screenshot
 
 
 class USBLoggerQt(QMainWindow):
+    large_transfer_alert_signal = QtCore.pyqtSignal(str, float, str, str, str)
+    unauthorized_device_alert_signal = QtCore.pyqtSignal(dict, str, str)
+
     def __init__(self):
         super().__init__()
+        self.large_transfer_alert_signal.connect(self.show_large_transfer_alert)
+        self.unauthorized_device_alert_signal.connect(self.show_unauthorized_device_alert)
         self.setWindowTitle("Real Time USB Activity Logger")
         self.resize(1200, 800)
         self.THEME_CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'theme_config.json')
@@ -329,12 +334,14 @@ class USBLoggerQt(QMainWindow):
         self.recipients_input = QLineEdit()
         self.recipients_input.setPlaceholderText("Recipient emails, comma-separated")
         self.smtp_tls_chk = QCheckBox("Use TLS/STARTTLS")
-        self.test_email_btn = QPushButton("Send Test Email")
+        self.test_email_btn = QPushButton("Send Mail")
         self.open_whitelist_btn = QPushButton("Open whitelist file")
         self.save_settings_btn = QPushButton("Save Settings")
 
         self.settings_layout.addWidget(self.whitelist_enabled_chk)
         self.settings_layout.addWidget(self.alert_on_unknown_chk)
+        self.email_alerts_chk.setChecked(True)
+        self.email_alerts_chk.setEnabled(False)  # Always-ON: mail alerts cannot be disabled
         self.settings_layout.addWidget(self.email_alerts_chk)
         self.settings_layout.addWidget(QLabel("SMTP Host"))
         self.settings_layout.addWidget(self.smtp_host_input)
@@ -894,7 +901,8 @@ class USBLoggerQt(QMainWindow):
         config = get_app_config()
         self.whitelist_enabled_chk.setChecked(config.get('whitelist_enabled', True))
         self.alert_on_unknown_chk.setChecked(config.get('alert_on_unknown_device', True))
-        self.email_alerts_chk.setChecked(config.get('email_alerts', {}).get('enabled', False))
+        self.email_alerts_chk.setChecked(True)   # Always-ON
+        self.email_alerts_chk.setEnabled(False)   # Cannot be turned off
         self.smtp_host_input.setText(config.get('email_alerts', {}).get('smtp_host', ''))
         self.smtp_port_input.setText(str(config.get('email_alerts', {}).get('smtp_port', 587)))
         self.smtp_username_input.setText(config.get('email_alerts', {}).get('username', ''))
@@ -926,7 +934,7 @@ class USBLoggerQt(QMainWindow):
         config['screenshot_dir'] = screenshot_dir
 
         email_config = config.get('email_alerts', {})
-        email_config['enabled'] = self.email_alerts_chk.isChecked()
+        email_config['enabled'] = True  # Always-ON: email alerts are permanently enabled
         email_config['smtp_host'] = self.smtp_host_input.text().strip()
         try:
             email_config['smtp_port'] = int(self.smtp_port_input.text().strip() or 587)
@@ -956,7 +964,8 @@ class USBLoggerQt(QMainWindow):
             QMessageBox.critical(self, "Open Failed", f"Unable to open whitelist file:\n{e}")
 
     def toggle_email_controls(self, state=None):
-        enabled = self.email_alerts_chk.isChecked()
+        # Email alerts are always ON; SMTP fields are always enabled so the
+        # user can configure them, but the checkbox itself stays checked & locked.
         for widget in [
                 self.smtp_host_input,
                 self.smtp_port_input,
@@ -966,7 +975,50 @@ class USBLoggerQt(QMainWindow):
                 self.sender_input,
                 self.recipients_input,
                 self.test_email_btn]:
-            widget.setEnabled(enabled)
+            widget.setEnabled(True)
+
+    # ------------------------------------------------------------------
+    # AUTO-SEND MALICIOUS ACTIVITY EMAIL
+    # ------------------------------------------------------------------
+    def _send_malicious_alert_email(self, subject: str, body: str, attachment_path: str = None):
+        """Send a security alert email in a background thread, optionally with a screenshot attachment.
+
+        Reads SMTP credentials from the current config so it always uses
+        the latest saved settings without blocking the UI thread.
+        """
+        def _worker():
+            try:
+                config = get_app_config()
+                email_cfg = config.get('email_alerts', {})
+                recipients = email_cfg.get('recipients', [])
+                smtp_settings = {
+                    'smtp_host': email_cfg.get('smtp_host', ''),
+                    'smtp_port': email_cfg.get('smtp_port', 587),
+                    'use_tls': email_cfg.get('use_tls', True),
+                    'username': email_cfg.get('username', ''),
+                    'password': email_cfg.get('password', ''),
+                    'sender': email_cfg.get('sender', ''),
+                }
+                if not recipients:
+                    print('[!] Auto-alert email skipped: no recipients configured.')
+                    return
+                if not smtp_settings['smtp_host'] or not smtp_settings['username'] or not smtp_settings['password']:
+                    print('[!] Auto-alert email skipped: incomplete SMTP config.')
+                    return
+                errors = []
+                ok = send_email_notification(
+                    subject, body, recipients, smtp_settings,
+                    error_out=errors, attachment_path=attachment_path
+                )
+                if ok:
+                    print(f'[OK] Security alert email sent: {subject}')
+                else:
+                    print(f'[ERROR] Failed to send security alert email: {errors}')
+            except Exception as exc:
+                print(f'[ERROR] _send_malicious_alert_email: {exc}')
+
+        t = threading.Thread(target=_worker, daemon=True)
+        t.start()
 
     def send_test_email(self):
         try:
@@ -1043,7 +1095,7 @@ class USBLoggerQt(QMainWindow):
     @QtCore.pyqtSlot(bool, str)
     def _on_test_email_done(self, success, error_msg):
         self.test_email_btn.setEnabled(True)
-        self.test_email_btn.setText("Send Test Email")
+        self.test_email_btn.setText("Send Mail")
         if success:
             QMessageBox.information(self, "Test Email", "Test email sent successfully!\n\nCheck your inbox.")
         else:
@@ -1087,17 +1139,75 @@ class USBLoggerQt(QMainWindow):
                 self.refresh_all()
 
     def show_large_transfer_alert(self, file_path, file_size_mb, username, event_type, risk_flag='LARGE_TRANSFER'):
-        # Simple Qt alert mirroring tkinter behavior
+        """Show an on-screen alert AND auto-send an email with screenshot attached for malicious/suspicious file activity."""
         filename = file_path.split('/')[-1]
         title = "SECURITY ALERT" if risk_flag == 'LARGE_TRANSFER' else "SUSPICIOUS FILE"
-        msg = f"File: {filename}\nFull Path: {file_path}\nSize: {file_size_mb:.2f} MB\nEvent: {event_type}\nUser: {username}\nTime: {get_timestamp()}\nRisk: {risk_flag}"
+        timestamp = get_timestamp()
+
+        # 1. Capture screenshot first
+        config = get_app_config()
+        screenshot_dir = config.get('screenshot_dir', 'screenshots')
+        screenshot_path = capture_screenshot(save_dir=screenshot_dir, prefix=f'alert_{risk_flag}')
+
+        # 2. Auto-send email alert IMMEDIATELY with the screenshot attached (non-blocking)
+        email_subject = f"[USB Logger] {title} – {risk_flag} Detected"
+        email_body = (
+            f"USB Logger has detected a {risk_flag} event.\n\n"
+            f"Details:\n"
+            f"  File      : {file_path}\n"
+            f"  Size      : {file_size_mb:.2f} MB\n"
+            f"  Event Type: {event_type}\n"
+            f"  Risk Flag : {risk_flag}\n"
+            f"  Username  : {username}\n"
+            f"  Timestamp : {timestamp}\n\n"
+            "The screenshot taken at the moment of detection is attached to this email.\n"
+            "Please review the USB activity log immediately."
+        )
+        self._send_malicious_alert_email(email_subject, email_body, attachment_path=screenshot_path)
+
+        # 3. Finally show the dialog (which blocks UI thread but does not prevent the email/screenshot from going out)
+        msg = (
+            f"File: {filename}\n"
+            f"Full Path: {file_path}\n"
+            f"Size: {file_size_mb:.2f} MB\n"
+            f"Event: {event_type}\n"
+            f"User: {username}\n"
+            f"Time: {timestamp}\n"
+            f"Risk: {risk_flag}"
+        )
         QMessageBox.warning(self, title, msg)
 
     def show_unauthorized_device_alert(self, device_info, username, timestamp):
+        """Show an on-screen alert AND auto-send an email with screenshot attached when an unauthorized USB is detected."""
         device_name = device_info.get('name', 'Unknown Device')
         vid = device_info.get('vid', 'N/A')
         pid = device_info.get('pid', 'N/A')
         serial = device_info.get('serial', 'N/A')
+
+        # 1. Capture screenshot first
+        config = get_app_config()
+        screenshot_dir = config.get('screenshot_dir', 'screenshots')
+        screenshot_path = capture_screenshot(save_dir=screenshot_dir, prefix='alert_unauthorized')
+
+        # 2. Auto-send email alert IMMEDIATELY with the screenshot attached (non-blocking)
+        email_subject = "[USB Logger] ⚠️ UNAUTHORIZED USB DEVICE DETECTED"
+        email_body = (
+            "USB Logger has detected an UNAUTHORIZED USB device insertion.\n\n"
+            "Device Details:\n"
+            f"  Device Name : {device_name}\n"
+            f"  Vendor ID   : {vid}\n"
+            f"  Product ID  : {pid}\n"
+            f"  Serial No.  : {serial}\n"
+            f"  Username    : {username}\n"
+            f"  Timestamp   : {timestamp}\n\n"
+            "The screenshot taken at the moment of detection is attached to this email.\n"
+            "ACTION REQUIRED: Review the Security tab in USB Logger and update "
+            "the whitelist if this device is trusted. If this device is unknown, "
+            "consider it a potential security threat."
+        )
+        self._send_malicious_alert_email(email_subject, email_body, attachment_path=screenshot_path)
+
+        # 3. Finally show the dialog (which blocks UI thread but does not prevent the email/screenshot from going out)
         msg = (
             f"Unauthorized USB device detected:\n\n"
             f"Device: {device_name}\n"
@@ -1121,8 +1231,8 @@ def launch_gui():
     # Hook file alert callback if monitor is available
     try:
         from monitor import set_file_alert_callback, set_usb_alert_callback
-        set_file_alert_callback(window.show_large_transfer_alert)
-        set_usb_alert_callback(window.show_unauthorized_device_alert)
+        set_file_alert_callback(lambda file_path, file_size_mb, username, event_type, risk_flag='LARGE_TRANSFER': window.large_transfer_alert_signal.emit(file_path, file_size_mb, username, event_type, risk_flag))
+        set_usb_alert_callback(lambda device_info, username, timestamp: window.unauthorized_device_alert_signal.emit(device_info, username, timestamp))
     except Exception:
         pass
 
